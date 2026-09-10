@@ -1,0 +1,389 @@
+{
+  "entities": {
+    "Job": {
+      "title": "Job",
+      "description": "Lowongan pekerjaan terverifikasi di DIGAWE YUK khusus Provinsi Jawa Barat",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Judul posisi lowongan pekerjaan",
+          "maxLength": 200
+        },
+        "company": {
+          "type": "string",
+          "description": "Nama perusahaan perekrut",
+          "maxLength": 150
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Nama resmi perusahaan",
+          "maxLength": 150
+        },
+        "location": {
+          "type": "string",
+          "description": "Lokasi penempatan kerja di Jawa Barat",
+          "maxLength": 100
+        },
+        "province": {
+          "type": "string",
+          "description": "Provinsi penempatan (wajib Jawa Barat)"
+        },
+        "city": {
+          "type": "string",
+          "description": "Kota / Kabupaten di Jawa Barat (27 wilayah administratif)"
+        },
+        "companyAddress": {
+          "type": "string",
+          "description": "Alamat fisik lengkap perusahaan di Jawa Barat"
+        },
+        "companyEmail": {
+          "type": "string",
+          "description": "Alamat email resmi perusahaan"
+        },
+        "companyPhone": {
+          "type": "string",
+          "description": "Nomor telepon resmi perusahaan"
+        },
+        "contactType": {
+          "type": "string",
+          "description": "Jenis kontak yang tersedia",
+          "enum": ["email", "phone", "both"]
+        },
+        "contactSourceUrl": {
+          "type": "string",
+          "description": "URL sumber verifikasi kontak perusahaan"
+        },
+        "category": {
+          "type": "string",
+          "description": "Kategori industri pekerjaan",
+          "maxLength": 100
+        },
+        "salary": {
+          "type": "string",
+          "description": "Rentang kompensasi atau gaji (null jika tidak tertera)"
+        },
+        "employmentType": {
+          "type": "string",
+          "description": "Jenis pekerjaan",
+          "enum": ["Penuh Waktu", "Paruh Waktu", "Kontrak", "Magang", "Freelance", "Remote"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Deskripsi pekerjaan",
+          "maxLength": 5000
+        },
+        "requirements": {
+          "type": "array",
+          "description": "Daftar persyaratan pekerjaan"
+        },
+        "qualifications": {
+          "type": "array",
+          "description": "Daftar kualifikasi pekerjaan"
+        },
+        "sourceName": {
+          "type": "string",
+          "description": "Nama sumber asli lowongan",
+          "maxLength": 100
+        },
+        "sourceUrl": {
+          "type": "string",
+          "description": "Tautan URL pendaftaran resmi",
+          "maxLength": 1000
+        },
+        "sourceType": {
+          "type": "string",
+          "description": "Tipe sumber lowongan",
+          "enum": ["official_company", "job_portal", "other_verified_source"]
+        },
+        "publishedAt": {
+          "type": "string",
+          "description": "Tanggal rilis lowongan"
+        },
+        "foundAt": {
+          "type": "string",
+          "description": "Waktu penemuan lowongan oleh AI Job Hunter"
+        },
+        "applicationDeadline": {
+          "type": "string",
+          "description": "Batas akhir pendaftaran"
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "Batas akhir masa aktif lowongan di sistem"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status lowongan",
+          "enum": ["active", "closed", "expired"]
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Status verifikasi umum"
+        },
+        "companyVerified": {
+          "type": "boolean",
+          "description": "Status verifikasi nama perusahaan"
+        },
+        "locationVerified": {
+          "type": "boolean",
+          "description": "Status verifikasi lokasi Jawa Barat"
+        },
+        "addressVerified": {
+          "type": "boolean",
+          "description": "Status verifikasi alamat fisik"
+        },
+        "contactVerified": {
+          "type": "boolean",
+          "description": "Status verifikasi email atau telepon"
+        },
+        "sourceVerified": {
+          "type": "boolean",
+          "description": "Status verifikasi URL sumber"
+        },
+        "validationStatus": {
+          "type": "string",
+          "description": "Status validasi AI",
+          "enum": ["valid", "invalid", "needs_review"]
+        },
+        "validationReason": {
+          "type": "string",
+          "description": "Alasan hasil validasi AI"
+        },
+        "sourceCheckedAt": {
+          "type": "string",
+          "description": "Waktu pengecekan sumber terakhir"
+        },
+        "jobHash": {
+          "type": "string",
+          "description": "Fingerprint hash deduplikasi lowongan"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Waktu pembuatan data ISO string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Waktu pembaruan data ISO string"
+        }
+      },
+      "required": ["title", "company", "location", "province", "city", "companyAddress", "status", "sourceUrl"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Profil pengguna DIGAWE YUK",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "UID pengguna dari Firebase Authentication"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nama lengkap pengguna"
+        },
+        "email": {
+          "type": "string",
+          "description": "Alamat email pengguna"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL foto profil pengguna"
+        },
+        "subscriptionStatus": {
+          "type": "string",
+          "description": "Status langganan akun",
+          "enum": ["FREE", "PREMIUM"]
+        },
+        "role": {
+          "type": "string",
+          "description": "Peran sistem pengguna",
+          "enum": ["user", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Waktu registrasi akun ISO string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Waktu pembaruan profil ISO string"
+        }
+      },
+      "required": ["uid", "name", "email", "subscriptionStatus", "role"]
+    },
+    "SavedJob": {
+      "title": "SavedJob",
+      "description": "Pekerjaan yang disimpan oleh pengguna Premium",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID pengguna pemilik data tersimpan"
+        },
+        "jobId": {
+          "type": "string",
+          "description": "ID referensi lowongan di collection jobs"
+        },
+        "savedAt": {
+          "type": "string",
+          "description": "Waktu penandaan simpan ISO string"
+        }
+      },
+      "required": ["userId", "jobId"]
+    },
+    "JobHunterLog": {
+      "title": "JobHunterLog",
+      "description": "Catatan riwayat eksekusi AI Job Hunter Jawa Barat",
+      "type": "object",
+      "properties": {
+        "runId": { "type": "string" },
+        "startedAt": { "type": "string" },
+        "finishedAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["running", "success", "failed", "partial"] },
+        "totalDiscovered": { "type": "number" },
+        "totalAccepted": { "type": "number" },
+        "totalRejected": { "type": "number" },
+        "rejectedOutsideWestJava": { "type": "number" },
+        "rejectedNoAddress": { "type": "number" },
+        "rejectedNoContact": { "type": "number" },
+        "rejectedInvalidCompany": { "type": "number" },
+        "rejectedInvalidSource": { "type": "number" },
+        "duplicates": { "type": "number" },
+        "errors": { "type": "array" },
+        "executedBy": { "type": "string" }
+      }
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Profil perusahaan dan recruiter resmi di DIGAWE YUK",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "industry": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "province": { "type": "string" },
+        "website": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "verificationStatus": { "type": "string", "enum": ["unverified", "pending", "verified"] },
+        "subscription": { "type": "object" }
+      },
+      "required": ["name", "email", "province"]
+    },
+    "Interview": {
+      "title": "Interview",
+      "description": "Ruang interview dan seleksi online yang dibuat perusahaan",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "interviewName": { "type": "string" },
+        "position": { "type": "string" },
+        "roomCode": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "minimumPassingScore": { "type": "number" },
+        "status": { "type": "string" },
+        "questions": { "type": "array" },
+        "invitedCandidates": { "type": "array" }
+      },
+      "required": ["companyId", "interviewName", "position", "roomCode"]
+    },
+    "InterviewSession": {
+      "title": "InterviewSession",
+      "description": "Sesi pengerjaan interview kandidat dengan server-authoritative timer dan scoring",
+      "type": "object",
+      "properties": {
+        "candidateId": { "type": "string" },
+        "candidateName": { "type": "string" },
+        "companyId": { "type": "string" },
+        "interviewId": { "type": "string" },
+        "startedAt": { "type": "string" },
+        "expiresAt": { "type": "string" },
+        "status": { "type": "string" },
+        "answers": { "type": "object" },
+        "score": { "type": "number" },
+        "passed": { "type": "boolean" },
+        "activityLog": { "type": "array" }
+      },
+      "required": ["candidateId", "interviewId", "startedAt", "expiresAt", "status"]
+    },
+    "QuestionBankItem": {
+      "title": "QuestionBankItem",
+      "description": "Item bank soal rekruitmen perusahaan",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "question": { "type": "string" },
+        "type": { "type": "string" },
+        "points": { "type": "number" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string" }
+      },
+      "required": ["companyId", "question", "type", "points"]
+    },
+    "JobApplication": {
+      "title": "JobApplication",
+      "description": "Lamaran kandidat dan status pipeline rekrutmen",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "companyId": { "type": "string" },
+        "candidateId": { "type": "string" },
+        "stage": { "type": "string" },
+        "appliedAt": { "type": "string" }
+      },
+      "required": ["jobId", "companyId", "candidateId", "stage"]
+    }
+  },
+  "firestore": {
+    "/jobs/{jobId}": {
+      "schema": "Job",
+      "description": "Daftar lowongan pekerjaan terverifikasi Jawa Barat"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Profil pengguna dan status keanggotaan"
+    },
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Profil perusahaan dan manajemen rekruter"
+    },
+    "/interviews/{interviewId}": {
+      "schema": "Interview",
+      "description": "Jadwal dan konfigurasi online interview perusahaan"
+    },
+    "/interviewSessions/{sessionId}": {
+      "schema": "InterviewSession",
+      "description": "Sesi pengerjaan interview kandidat"
+    },
+    "/questionBanks/{questionId}": {
+      "schema": "QuestionBankItem",
+      "description": "Bank soal perusahaan"
+    },
+    "/applications/{applicationId}": {
+      "schema": "JobApplication",
+      "description": "Lamaran dan jalur pipeline rekrutmen"
+    },
+    "/savedJobs/{savedJobId}": {
+      "schema": "SavedJob",
+      "description": "Catatan lowongan tersimpan pengguna Premium"
+    },
+    "/jobHunterLogs/{logId}": {
+      "schema": "JobHunterLog",
+      "description": "Log riwayat eksekusi AI Job Hunter Jawa Barat"
+    },
+    "/subscription_packages/{packageId}": {
+      "schema": "SubscriptionPackage",
+      "description": "Konfigurasi paket langganan Premium pengguna & perusahaan"
+    },
+    "/payment_submissions/{submissionId}": {
+      "schema": "PaymentSubmission",
+      "description": "Pengajuan bukti pembayaran manual Premium menunggu verifikasi Admin"
+    }
+  }
+}

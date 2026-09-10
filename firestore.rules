@@ -1,0 +1,313 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // STRICT Super Admin authorization: id.agnesyakartika@gmail.com
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'id.agnesyakartika@gmail.com' ||
+        request.auth.token.email.lower() == 'id.agnesyakartika@gmail.com'
+      );
+    }
+
+    // Default deny for unlisted documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users collection:
+    // - Regular users & companies can read and edit only their own basic profile (name, photoURL)
+    // - Regular users CANNOT modify subscriptionStatus, role, or balance
+    // - Super Admin can read and manage all user profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isSuperAdmin();
+      allow create: if isOwner(userId) && 
+        request.resource.data.subscriptionStatus == 'FREE' && 
+        (
+          ((request.auth.token.email == 'id.agnesyakartika@gmail.com' || request.auth.token.email.lower() == 'id.agnesyakartika@gmail.com') && (request.resource.data.role in ['super_admin', 'user', 'company'])) ||
+          ((request.auth.token.email != 'id.agnesyakartika@gmail.com' && request.auth.token.email.lower() != 'id.agnesyakartika@gmail.com') && (request.resource.data.role in ['user', 'company']))
+        );
+      allow update: if isSuperAdmin() || (
+        isOwner(userId) &&
+        request.resource.data.subscriptionStatus == resource.data.subscriptionStatus &&
+        request.resource.data.role == resource.data.role &&
+        (!('balance' in request.resource.data) || request.resource.data.balance == resource.data.balance)
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Companies collection:
+    // - Public read for authenticated users & visitors (viewing company profile/jobs)
+    // - Company owner can create and update their company profile
+    // - Super Admin can manage all companies
+    match /companies/{companyId} {
+      allow read: if true;
+      allow create: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == companyId);
+      allow update: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == companyId);
+      allow delete: if isSuperAdmin();
+    }
+
+    // Interviews collection:
+    // - Company owner can create, read, update, delete their interviews
+    // - Candidates can read active/invited interviews
+    // - Super Admin can manage
+    match /interviews/{interviewId} {
+      allow read: if isAuthenticated() && (
+        resource == null || 
+        resource.data.companyId == request.auth.uid || 
+        isSuperAdmin() || 
+        resource.data.status in ['OPEN', 'SCHEDULED', 'IN_PROGRESS', 'CLOSED', 'COMPLETED']
+      );
+      allow create: if isSuperAdmin() || (isAuthenticated() && request.resource.data.companyId == request.auth.uid);
+      allow update: if isSuperAdmin() || (isAuthenticated() && resource.data.companyId == request.auth.uid);
+      allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.companyId == request.auth.uid);
+    }
+
+    // Interview Sessions collection:
+    // - Candidate can read/create/update their own interview session
+    // - Company owner of the interview can read and evaluate the session
+    // - Super Admin can read and manage
+    match /interviewSessions/{sessionId} {
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.candidateId == request.auth.uid ||
+        resource.data.companyId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow create: if isSuperAdmin() || (isAuthenticated() && request.resource.data.candidateId == request.auth.uid);
+      allow update: if isSuperAdmin() || (
+        isAuthenticated() && (
+          resource.data.candidateId == request.auth.uid ||
+          resource.data.companyId == request.auth.uid
+        )
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Question Banks collection:
+    // - Company owner can manage their custom questions
+    // - Super Admin can manage
+    match /questionBanks/{questionId} {
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.companyId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow create: if isSuperAdmin() || (isAuthenticated() && request.resource.data.companyId == request.auth.uid);
+      allow update: if isSuperAdmin() || (isAuthenticated() && resource.data.companyId == request.auth.uid);
+      allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.companyId == request.auth.uid);
+    }
+
+    // Applications collection:
+    // - Candidate can read and create their own job applications
+    // - Company can read and update pipeline stage of applications for their jobs
+    // - Super Admin can read and manage
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.candidateId == request.auth.uid ||
+        resource.data.companyId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow create: if isSuperAdmin() || (isAuthenticated() && request.resource.data.candidateId == request.auth.uid);
+      allow update: if isSuperAdmin() || (
+        isAuthenticated() && (
+          resource.data.candidateId == request.auth.uid ||
+          resource.data.companyId == request.auth.uid
+        )
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Helper for validating Job document structure
+    function isValidJob() {
+      return request.resource.data.title is string &&
+        request.resource.data.title.size() <= 200 &&
+        (
+          (request.resource.data.company is string && request.resource.data.company.size() <= 150) ||
+          (request.resource.data.companyName is string && request.resource.data.companyName.size() <= 150)
+        ) &&
+        request.resource.data.province == 'Jawa Barat' &&
+        request.resource.data.sourceUrl is string;
+    }
+
+    // Jobs collection:
+    // - Public read for all job seekers
+    // - Write allowed for Super Admin or for valid jobs matching the West Java schema
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create, update: if isSuperAdmin() || isValidJob();
+      allow delete: if isSuperAdmin() || (resource.data.province == 'Jawa Barat' && (resource.data.status in ['expired', 'closed'] || resource.data.expiresAt != ''));
+    }
+
+    // SavedJobs collection:
+    // - Authenticated users can only read, create, and delete their own saved jobs
+    match /savedJobs/{savedJobId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow update: if false;
+    }
+
+    // AI Job Hunter Logs collection:
+    // - Super Admin can read and inspect all logs
+    // - Logs can be created and updated by Super Admin or system execution with valid status
+    match /jobHunterLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create, update: if isSuperAdmin() || (
+        request.resource.data.status in ['running', 'success', 'failed', 'partial', 'quota_exhausted']
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Settings collection:
+    // - Public read for system configs (e.g. search locations, categories)
+    // - Write restricted to Super Admin or valid settings document
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || request.resource.data.enabled is bool;
+    }
+
+    // ==========================================
+    // TAHAP 5: SOCIAL RECRUITMENT & MODERATION
+    // ==========================================
+
+    // Posts Collection:
+    // - Public read for approved posts; author & admin can read their own
+    // - Authenticated users can create their own post
+    // - Owner or Super Admin can edit/delete; counter increments permitted
+    match /posts/{postId} {
+      allow read: if resource.data.moderationStatus == 'APPROVED' || 
+                     (isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperAdmin()));
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSuperAdmin() || (
+        isAuthenticated() && (
+          resource.data.userId == request.auth.uid ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'likesCount', 'commentsCount', 'likeCount', 'commentCount', 'shareCount', 'saveCount', 'viewsCount', 'postId', 'openToWork', 'status', 'updatedAt'
+          ])
+        )
+      );
+      allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+
+      // Post Likes subcollection
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Post Comments subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow update: if isSuperAdmin();
+        allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      }
+    }
+
+    // Chats Collection:
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        request.auth.uid in resource.data.participants ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthenticated() && request.auth.uid in request.resource.data.participants;
+      allow update: if isAuthenticated() && (
+        request.auth.uid in resource.data.participants ||
+        isSuperAdmin()
+      );
+      allow delete: if isSuperAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants ||
+          isSuperAdmin()
+        );
+        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isSuperAdmin();
+      }
+    }
+
+    // Notifications Collection:
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+    }
+
+    // Saved Posts Collection:
+    match /savedPosts/{savedPostId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow update: if false;
+    }
+
+    // Reports Collection:
+    // - Users can create reports
+    // - Super Admin can read, resolve, and manage
+    match /reports/{reportId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthenticated() || (request.resource.data.category != null && request.resource.data.reason != null);
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // User Warnings Collection:
+    match /userWarnings/{warningId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow create, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    // Moderation Appeals Collection:
+    match /moderationAppeals/{appealId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() || (request.resource.data.statement != null);
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Moderation Logs (Audit trail):
+    match /moderationLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // TAHAP 6: SUBSCRIPTION PACKAGES & PAYMENT VERIFICATION
+    // ==========================================
+
+    // Subscription Packages Collection:
+    // - Public read so all users & companies can view available packages
+    // - Super Admin can create, update, delete packages
+    match /subscription_packages/{packageId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Payment Submissions Collection:
+    // - Authenticated user can read their own submissions, Super Admin can read all
+    // - Authenticated user can create submission with their own userId
+    // - Super Admin can update (APPROVE / REJECT) and delete
+    match /payment_submissions/{submissionId} {
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.userId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

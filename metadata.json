@@ -1,0 +1,6 @@
+{
+  "name": "DIGAWE YUK",
+  "description": "Platform lowongan kerja terverifikasi wilayah Jawa Barat lengkap dengan Social Recruitment Feed, Open to Work, Candidate Discovery, dan AI Moderation Center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
